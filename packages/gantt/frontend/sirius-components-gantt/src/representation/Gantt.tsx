@@ -34,6 +34,7 @@ import { Selection } from '@eclipse-sirius/sirius-components-core';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Theme, useTheme } from '@mui/material/styles';
+import Cookies from 'js-cookie';
 import { useEffect, useRef, useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
 import { GQLGanttDateRoundingTimeUnit, SelectableTask } from '../graphql/subscription/GanttSubscription.types';
@@ -41,6 +42,61 @@ import { checkIsHoliday, getDisplayedColumns, getSelectedColumns, roundDate } fr
 import { getTaskContextualPalette, getTaskDependencyContextualPalette } from '../palette/ContextualPalette';
 import { Toolbar } from '../toolbar/Toolbar';
 import { GanttProps, GanttState, TaskListColumnEnum } from './Gantt.types';
+
+const setCookies = (viewMode: ViewMode, representationId: String) => {
+  let viewModeToString = 'Day';
+  switch (viewMode) {
+    case ViewMode.Hour:
+      viewModeToString = 'Hour';
+      break;
+    case ViewMode.QuarterDay:
+      viewModeToString = 'Quarter Day';
+      break;
+    case ViewMode.HalfDay:
+      viewModeToString = 'Half Day';
+      break;
+    case ViewMode.Day:
+      viewModeToString = 'Day';
+      break;
+    case ViewMode.TwoDays:
+      viewModeToString = 'Two Days';
+      break;
+    case ViewMode.Week:
+      viewModeToString = 'Week';
+      break;
+    case ViewMode.Month:
+      viewModeToString = 'Month';
+      break;
+    case ViewMode.Year:
+      viewModeToString = 'Year';
+      break;
+  }
+  Cookies.set('viewMode' + representationId, viewModeToString, { expires: 1 });
+};
+
+const getCookies = (representationId: String) => {
+  let defaultViewMode = ViewMode.Day;
+  let cookies = Cookies.get('viewMode' + representationId);
+  switch (cookies) {
+    case 'Hour':
+      return ViewMode.Hour;
+    case 'Quarter Day':
+      return ViewMode.QuarterDay;
+    case 'Half Day':
+      return ViewMode.QuarterDay;
+    case 'Day':
+      return ViewMode.Day;
+    case 'Two Days':
+      return ViewMode.TwoDays;
+    case 'Week':
+      return ViewMode.Week;
+    case 'Month':
+      return ViewMode.Month;
+    case 'Year':
+      return ViewMode.Year;
+  }
+  return defaultViewMode;
+};
 
 const useGanttStyle = makeStyles()((theme) => ({
   ganttContainer: {
@@ -75,7 +131,7 @@ export const Gantt = ({
 }: GanttProps) => {
   // all Columns state is used to avoid the blink effect when resizing the column
   const [{ zoomLevel, selectedColumns, displayedColumns, displayColumns }, setState] = useState<GanttState>({
-    zoomLevel: ViewMode.Day,
+    zoomLevel: getCookies(representationId),
     selectedColumns: getSelectedColumns(gqlColumns),
     displayedColumns: getDisplayedColumns(gqlColumns),
     displayColumns: true,
@@ -93,6 +149,7 @@ export const Gantt = ({
         const currentIndex = Object.values(ViewMode).indexOf(zoomLevel);
         const newZoomLevel = Object.values(ViewMode).at(currentIndex - 1);
         if (newZoomLevel) {
+          setCookies(newZoomLevel, representationId);
           setState((prevState) => {
             return { ...prevState, zoomLevel: newZoomLevel };
           });
@@ -101,6 +158,7 @@ export const Gantt = ({
         const currentIndex = Object.values(ViewMode).indexOf(zoomLevel);
         const newZoomLevel = Object.values(ViewMode).at(currentIndex + 1);
         if (newZoomLevel) {
+          setCookies(newZoomLevel, representationId);
           setState((prevState) => {
             return { ...prevState, zoomLevel: newZoomLevel };
           });

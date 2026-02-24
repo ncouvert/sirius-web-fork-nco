@@ -119,6 +119,7 @@ export const Toolbar = ({
   };
 
   useEffect(() => {
+    console.log('TESTT');
     onFitToScreen();
   }, []);
 

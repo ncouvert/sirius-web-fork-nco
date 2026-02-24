@@ -29,6 +29,9 @@
     "format-lint": "prettier --list-different \"src/**/*.{js,ts,tsx,css}\"",
     "publish:local": "yalc push"
   },
+  "dependencies": {
+    "js-cookie": "^3.0.5"
+  },
   "peerDependencies": {
     "@apollo/client": "3.10.4",
     "@ObeoNetwork/gantt-task-react": "0.6.2",
