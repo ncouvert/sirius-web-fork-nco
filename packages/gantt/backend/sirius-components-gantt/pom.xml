@@ -28,6 +28,13 @@
 	<name>sirius-components-gantt</name>
 	<description>Sirius Components Gantt</description>
 
+	<repositories>
+		<repository>
+			<id>github-pepper-mm</id>
+			<url>https://maven.pkg.github.com/ObeoNetwork/pepper-mm</url>
+		</repository>
+	</repositories>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.eclipse.sirius</groupId>
@@ -45,7 +52,12 @@
 			<version>2026.3.3</version>
 			<scope>test</scope>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>pepper-mm</groupId>
+            <artifactId>pepper-mm</artifactId>
+            <version>2026.4.0</version>
+        </dependency>
+    </dependencies>
 
 	<build>
 		<plugins>

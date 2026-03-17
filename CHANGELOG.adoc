@@ -39,7 +39,7 @@ The switch to Spring Boot 4.0 also come with a switch to Jackson 3, see the offi
 Custom deserializers and migration services will probably be impacted.
 - https://github.com/eclipse-sirius/sirius-web/issues/6369[#6369] [diagram] In order to click behind the rectangle selection on a diagram, you'll need to update `ReactFlow.css` as per the `selection rectangle` section.
 -https://github.com/eclipse-sirius/sirius-web/issues/6067[#6067] [diagram] `moving` should be set when converting custom nodes.
-
+-https://github.com/eclipse-sirius/sirius-web/issues/6400[#6400] [gantt] Add a new `dependencyLink` concept to improve dependency management in Gantt. The Gantt descriptions have been changed.
 
 === Dependency update
 
@@ -54,7 +54,7 @@ Note this version requires at least Java 21 for the build environment (Sirius We
 - [releng] Switch `@mui/icons-material` to `7.3.10`
 - [releng] Switch `@ObeoNetwork/gantt-task-react` to `0.6.4`
 - [releng] Switch AQL 8.1.2
-- [releng] Add a dependency to https://github.com/ObeoNetwork/pepper-mm[pepper-mm 2026.3.0]
+- [releng] Switch from pepper-mm 2026.3.0 to 2026.4.0
 
 === Bug fixes
 
@@ -110,6 +110,7 @@ The backend now sends a `canEdit=false` capability when subscribing to such form
 - https://github.com/eclipse-sirius/sirius-web/issues/6300[#6300] [diagram] Make the arrange-all button remember the last layout configuration used.
 - https://github.com/eclipse-sirius/sirius-web/issues/6067[#6067] [diagram] Preserve edge path when moving both source and target
 - https://github.com/eclipse-sirius/sirius-web/issues/6403[#6403] [releng] Use pepper-mm instead of the old internal task metamodel used in the tests and task-starter
+- https://github.com/eclipse-sirius/sirius-web/issues/6400[#6400] [gantt] Use pepper-mm 2026.4.0 to introduce the concept of dependencyLink, which will be used to extends dependency management for the Gantt tasks
 
 
 
