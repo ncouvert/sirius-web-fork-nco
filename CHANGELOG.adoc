@@ -48,6 +48,7 @@ Custom deserializers and migration services will probably be impacted.
 - [releng] Switch to CheckStyle 13.3.0.
 Note this version requires at least Java 21 for the build environment (Sirius Web itself still only requires Java 17 to run).
 - [releng] https://github.com/eclipse-sirius/sirius-web/issues/6403[#6403] Use pepper-mm instead of the old internal task metamodel used in the tests and task-starter
+- [releng] https://github.com/eclipse-sirius/sirius-web/issues/6400[#6400] [releng] Switch to pepper-mm 2026.4.0 to introduce the concept of dependencyLink, which will be used to implement actual delays in dependencies
 
 === Bug fixes
 
