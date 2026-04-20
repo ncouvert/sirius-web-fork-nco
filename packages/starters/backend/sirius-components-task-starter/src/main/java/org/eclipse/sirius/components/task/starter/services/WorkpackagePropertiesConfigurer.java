@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2024, 2026 Obeo.
+ * Copyright (c) 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -10,10 +10,11 @@
  * Contributors:
  *     Obeo - initial API and implementation
  *******************************************************************************/
+
 package org.eclipse.sirius.components.task.starter.services;
 
 import java.time.DateTimeException;
-import java.time.Instant;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -32,14 +33,11 @@ import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.sirius.components.collaborative.forms.services.api.IPropertiesDescriptionRegistry;
 import org.eclipse.sirius.components.collaborative.forms.services.api.IPropertiesDescriptionRegistryConfigurer;
-import org.eclipse.sirius.components.core.api.IIdentityService;
 import org.eclipse.sirius.components.forms.DateTimeType;
 import org.eclipse.sirius.components.forms.components.SelectComponent;
 import org.eclipse.sirius.components.forms.description.AbstractControlDescription;
-import org.eclipse.sirius.components.forms.description.CheckboxDescription;
 import org.eclipse.sirius.components.forms.description.DateTimeDescription;
 import org.eclipse.sirius.components.forms.description.GroupDescription;
-import org.eclipse.sirius.components.forms.description.IfDescription;
 import org.eclipse.sirius.components.forms.description.PageDescription;
 import org.eclipse.sirius.components.forms.description.RadioDescription;
 import org.eclipse.sirius.components.forms.description.TextfieldDescription;
@@ -51,43 +49,37 @@ import org.eclipse.sirius.components.view.emf.compatibility.IPropertiesWidgetCre
 import org.eclipse.sirius.components.view.emf.compatibility.PropertiesConfigurerService;
 import org.springframework.stereotype.Service;
 
-import pepper.peppermm.AbstractTask;
 import pepper.peppermm.PepperPackage;
 import pepper.peppermm.Person;
-import pepper.peppermm.Project;
-import pepper.peppermm.Task;
 import pepper.peppermm.TaskTimeBoundariesConstraint;
-import pepper.peppermm.Team;
+import pepper.peppermm.Workpackage;
 
 /**
- * Customizes the properties view for {@link AbstractTask} sub classes.
+ * Customizes the properties view for {@link Workpackage} sub classes.
  *
- * @author lfasani
+ * @author ncouvert
  */
 @Service
-public class AbstractTaskPropertiesConfigurer implements IPropertiesDescriptionRegistryConfigurer {
-
-    private final IIdentityService identityService;
+public class WorkpackagePropertiesConfigurer implements IPropertiesDescriptionRegistryConfigurer {
 
     private final IPropertiesWidgetCreationService propertiesWidgetCreationService;
 
     private final PropertiesConfigurerService propertiesConfigurerService;
 
-    public AbstractTaskPropertiesConfigurer(IIdentityService identityService, PropertiesConfigurerService propertiesConfigurerService, IPropertiesWidgetCreationService propertiesWidgetCreationService) {
-        this.identityService = Objects.requireNonNull(identityService);
+    public WorkpackagePropertiesConfigurer(PropertiesConfigurerService propertiesConfigurerService, IPropertiesWidgetCreationService propertiesWidgetCreationService) {
         this.propertiesConfigurerService = Objects.requireNonNull(propertiesConfigurerService);
         this.propertiesWidgetCreationService = Objects.requireNonNull(propertiesWidgetCreationService);
     }
 
     @Override
     public void addPropertiesDescriptions(IPropertiesDescriptionRegistry registry) {
-        String formDescriptionId = UUID.nameUUIDFromBytes("abstractTask".getBytes()).toString();
+        String formDescriptionId = UUID.nameUUIDFromBytes("workpackage".getBytes()).toString();
 
         List<AbstractControlDescription> controlsGeneral = new ArrayList<>(this.getGeneralControlDescription());
         List<AbstractControlDescription> controlsRessources = new ArrayList<>(this.getRessourcesControlDescription());
 
         Predicate<VariableManager> canCreatePagePredicate = variableManager -> variableManager.get(VariableManager.SELF, Object.class)
-                .filter(AbstractTask.class::isInstance)
+                .filter(Workpackage.class::isInstance)
                 .isPresent();
 
         GroupDescription groupDescriptionGeneral = this.propertiesWidgetCreationService.createSimpleGroupDescription(controlsGeneral);
@@ -109,57 +101,49 @@ public class AbstractTaskPropertiesConfigurer implements IPropertiesDescriptionR
         registry.add(pageDescription);
 
     }
-
     private List<AbstractControlDescription> getGeneralControlDescription() {
         List<AbstractControlDescription> controls = new ArrayList<>();
 
-        var name = this.propertiesWidgetCreationService.createTextField("abstractTask.name", "Name",
-                task -> Optional.ofNullable(((AbstractTask) task).getName()).orElse(""),
-                (task, newValue) -> {
-                    ((AbstractTask) task).setName(newValue);
+        var name = this.propertiesWidgetCreationService.createTextField("workpackage.name", "Name",
+                workpackage -> Optional.ofNullable(((Workpackage) workpackage).getName()).orElse(""),
+                (workpackage, newValue) -> {
+                    ((Workpackage) workpackage).setName(newValue);
                 },
-                PepperPackage.Literals.ABSTRACT_TASK__NAME);
+                PepperPackage.Literals.WORKPACKAGE__NAME);
         controls.add(name);
 
-        var description = this.propertiesWidgetCreationService.createExpressionField("abstractTask.description", "Description",
-                task -> Optional.ofNullable(((AbstractTask) task).getDescription()).orElse(""),
-                (task, newValue) -> {
-                    ((AbstractTask) task).setDescription(newValue);
+        var description = this.propertiesWidgetCreationService.createExpressionField("workpackage.description", "Description",
+                workpackage -> Optional.ofNullable(((Workpackage) workpackage).getDescription()).orElse(""),
+                (workpackage, newValue) -> {
+                    ((Workpackage) workpackage).setDescription(newValue);
                 },
-                PepperPackage.Literals.ABSTRACT_TASK__DESCRIPTION);
+                PepperPackage.Literals.WORKPACKAGE__DESCRIPTION);
         controls.add(description);
 
         var calculationOption = this.getCalculationOptionWidget();
         controls.add(calculationOption);
 
-        var startTime = this.getStartTimeWidget();
-        controls.add(startTime);
+        var startDate = this.getStartDateWidget();
+        controls.add(startDate);
 
-        var endTime = this.getEndTimeWidget();
-        controls.add(endTime);
+        var endDate = this.getEndDateWidget();
+        controls.add(endDate);
 
         var duration = this.getDurationWidget();
         controls.add(duration);
 
-        IfDescription ifComputeDynamically = this.createComputeDynamicallyWidget();
-        controls.add(ifComputeDynamically);
-
-        var progress = this.propertiesWidgetCreationService.createTextField("abstractTask.progress", "Progress",
-                task -> String.valueOf(Optional.ofNullable(((AbstractTask) task).getProgress()).orElse(0)),
-                (task, newValue) -> {
+        var progress = this.propertiesWidgetCreationService.createTextField("workpackage.progress", "Progress",
+                workpackage -> String.valueOf(Optional.ofNullable(((Workpackage) workpackage).getProgress()).orElse(0)),
+                (workpackage, newValue) -> {
                     try {
                         int intValue = Integer.parseInt(newValue);
-                        ((AbstractTask) task).setProgress(intValue);
+                        ((Workpackage) workpackage).setProgress(intValue);
                     } catch (NumberFormatException e) {
                         // Ignore
                     }
                 },
-                PepperPackage.Literals.ABSTRACT_TASK__PROGRESS);
+                PepperPackage.Literals.WORKPACKAGE__PROGRESS);
         controls.add(progress);
-
-        var dependencies = this.propertiesWidgetCreationService.createReferenceWidget("abstractTask.dependencies", "Dependencies",
-                PepperPackage.Literals.DEPENDENCY_RELATED_OBJECT__DEPENDENCIES, this.getDependenciesProvider());
-        controls.add(dependencies);
 
         return controls;
     }
@@ -167,17 +151,13 @@ public class AbstractTaskPropertiesConfigurer implements IPropertiesDescriptionR
     private List<AbstractControlDescription> getRessourcesControlDescription() {
         List<AbstractControlDescription> controls = new ArrayList<>();
 
-        var tags = this.propertiesWidgetCreationService.createReferenceWidget("abstractTask.tags", "Tags",
-                PepperPackage.Literals.ABSTRACT_TASK__TAGS, this.getTagsProvider());
-        controls.add(tags);
+        var leader = this.propertiesWidgetCreationService.createReferenceWidget("workpackage.leader", "Leader",
+                PepperPackage.Literals.WORKPACKAGE__LEADER, this.getPersonsProvider());
+        controls.add(leader);
 
-        var persons = this.propertiesWidgetCreationService.createReferenceWidget("abstractTask.persons", "Assigned People",
-                PepperPackage.Literals.ABSTRACT_TASK__ASSIGNED_PERSONS, this.getPersonsProvider());
-        controls.add(persons);
-
-        var teams = this.propertiesWidgetCreationService.createReferenceWidget("abstractTask.teams", "Assigned Teams",
-                PepperPackage.Literals.ABSTRACT_TASK__ASSIGNED_TEAMS, this.getTeamsProvider());
-        controls.add(teams);
+        var participants = this.propertiesWidgetCreationService.createReferenceWidget("workpackage.participants", "Participants",
+                PepperPackage.Literals.WORKPACKAGE__PARTICIPANTS, this.getPersonsProvider());
+        controls.add(participants);
 
         return controls;
     }
@@ -188,8 +168,8 @@ public class AbstractTaskPropertiesConfigurer implements IPropertiesDescriptionR
             if (optionalTaskTimeBoundariesConstraint.isPresent()) {
                 TaskTimeBoundariesConstraint taskTimeBoundariesConstraint = optionalTaskTimeBoundariesConstraint.get();
                 String optionLitteralId = Integer.valueOf(taskTimeBoundariesConstraint.getValue()).toString();
-                var optionalValue = variableManager.get(VariableManager.SELF, AbstractTask.class)
-                        .map(AbstractTask::getCalculationOption)
+                var optionalValue = variableManager.get(VariableManager.SELF, Workpackage.class)
+                        .map(Workpackage::getCalculationOption)
                         .map(TaskTimeBoundariesConstraint::getValue)
                         .map(String::valueOf);
                 if (optionalValue.isPresent()) {
@@ -201,14 +181,14 @@ public class AbstractTaskPropertiesConfigurer implements IPropertiesDescriptionR
         };
 
         BiFunction<VariableManager, String, IStatus> newValueHandler = (variableManager, newValue) -> {
-            var taskOpt = variableManager.get(VariableManager.SELF, AbstractTask.class);
-            if (taskOpt.isPresent()) {
+            var workpackageOpt = variableManager.get(VariableManager.SELF, Workpackage.class);
+            if (workpackageOpt.isPresent()) {
                 if (newValue == null || newValue.isBlank()) {
-                    taskOpt.get().setCalculationOption(TaskTimeBoundariesConstraint.START_END);
+                    workpackageOpt.get().setCalculationOption(TaskTimeBoundariesConstraint.START_END);
                 } else {
                     int integer = Integer.parseInt(newValue);
                     TaskTimeBoundariesConstraint newConstraint = TaskTimeBoundariesConstraint.get(integer);
-                    taskOpt.get().setCalculationOption(newConstraint);
+                    workpackageOpt.get().setCalculationOption(newConstraint);
                 }
                 return new Success();
             } else {
@@ -216,7 +196,7 @@ public class AbstractTaskPropertiesConfigurer implements IPropertiesDescriptionR
             }
         };
 
-        String id = "abstractTask.calculationOption";
+        String id = "workpackage.calculationOption";
         return RadioDescription.newRadioDescription(id)
                 .idProvider(variableManager -> id)
                 .targetObjectIdProvider(this.propertiesConfigurerService.getSemanticTargetIdProvider())
@@ -232,26 +212,26 @@ public class AbstractTaskPropertiesConfigurer implements IPropertiesDescriptionR
                         .map(Enumerator::getName)
                         .orElse(""))
                 .newValueHandler(newValueHandler)
-                .diagnosticsProvider(this.propertiesConfigurerService.getDiagnosticsProvider(PepperPackage.Literals.ABSTRACT_TASK__CALCULATION_OPTION))
+                .diagnosticsProvider(this.propertiesConfigurerService.getDiagnosticsProvider(PepperPackage.Literals.WORKPACKAGE__CALCULATION_OPTION))
                 .kindProvider(this.propertiesConfigurerService.getKindProvider())
                 .messageProvider(this.propertiesConfigurerService.getMessageProvider())
                 .build();
     }
 
     private TextfieldDescription getDurationWidget() {
-        Function<VariableManager, String> valueProvider = variableManager -> variableManager.get(VariableManager.SELF, AbstractTask.class)
-                .map(AbstractTask::getDuration)
+        Function<VariableManager, String> valueProvider = variableManager -> variableManager.get(VariableManager.SELF, Workpackage.class)
+                .map(Workpackage::getDuration)
                 .map(String::valueOf)
                 .orElse("0");
         BiFunction<VariableManager, String, IStatus> newValueHandler = (variableManager, newValue) -> {
-            var taskOpt = variableManager.get(VariableManager.SELF, AbstractTask.class);
-            if (taskOpt.isPresent()) {
+            var workpackageOpt = variableManager.get(VariableManager.SELF, Workpackage.class);
+            if (workpackageOpt.isPresent()) {
                 if (newValue == null || newValue.isBlank()) {
-                    taskOpt.get().setDuration(0);
+                    workpackageOpt.get().setDuration(0);
                 } else {
                     try {
                         int integer = Integer.parseInt(newValue);
-                        taskOpt.get().setDuration(integer);
+                        workpackageOpt.get().setDuration(integer);
                     } catch (NumberFormatException e) {
                         // Ignore
                     }
@@ -262,28 +242,28 @@ public class AbstractTaskPropertiesConfigurer implements IPropertiesDescriptionR
             }
         };
 
-        String id = "abstractTask.duration";
+        String id = "workpackage.duration";
         return TextfieldDescription.newTextfieldDescription(id)
-                .isReadOnlyProvider(vm -> vm.get(VariableManager.SELF, AbstractTask.class)
-                        .map(task -> task.getCalculationOption() == TaskTimeBoundariesConstraint.START_END)
+                .isReadOnlyProvider(vm -> vm.get(VariableManager.SELF, Workpackage.class)
+                        .map(workpackage -> workpackage.getCalculationOption() == TaskTimeBoundariesConstraint.START_END)
                         .orElse(true))
                 .idProvider(variableManager -> id)
                 .targetObjectIdProvider(this.propertiesConfigurerService.getSemanticTargetIdProvider())
-                .labelProvider(variableManager -> "Duration (hours)")
+                .labelProvider(variableManager -> "Duration (days)")
                 .valueProvider(valueProvider)
                 .newValueHandler(newValueHandler)
-                .diagnosticsProvider(this.propertiesConfigurerService.getDiagnosticsProvider(PepperPackage.Literals.ABSTRACT_TASK__DURATION))
+                .diagnosticsProvider(this.propertiesConfigurerService.getDiagnosticsProvider(PepperPackage.Literals.WORKPACKAGE__DURATION))
                 .kindProvider(this.propertiesConfigurerService.getKindProvider())
                 .messageProvider(this.propertiesConfigurerService.getMessageProvider())
                 .build();
     }
 
-    private DateTimeDescription getStartTimeWidget() {
-        Function<VariableManager, String> valueProvider = variableManager -> variableManager.get(VariableManager.SELF, AbstractTask.class)
-                .map(task -> {
+    private DateTimeDescription getStartDateWidget() {
+        Function<VariableManager, String> valueProvider = variableManager -> variableManager.get(VariableManager.SELF, Workpackage.class)
+                .map(workpackage -> {
                     try {
-                        Instant startInstant = task.getStartTime();
-                        return DateTimeFormatter.ISO_INSTANT.format(startInstant);
+                        LocalDate startDate = workpackage.getStartDate();
+                        return DateTimeFormatter.ISO_LOCAL_DATE.format(startDate);
                     } catch (DateTimeException | NullPointerException e) {
                         // Ignore
                     }
@@ -291,14 +271,14 @@ public class AbstractTaskPropertiesConfigurer implements IPropertiesDescriptionR
                 })
                 .orElse("");
         BiFunction<VariableManager, String, IStatus> newValueHandler = (variableManager, newValue) -> {
-            var taskOpt = variableManager.get(VariableManager.SELF, AbstractTask.class);
-            if (taskOpt.isPresent()) {
+            var workpackageOpt = variableManager.get(VariableManager.SELF, Workpackage.class);
+            if (workpackageOpt.isPresent()) {
                 if (newValue == null || newValue.isBlank()) {
-                    taskOpt.get().setStartTime(null);
+                    workpackageOpt.get().setStartDate(null);
                 } else {
                     try {
-                        Instant instant = Instant.parse(newValue);
-                        taskOpt.get().setStartTime(instant);
+                        LocalDate localDate = LocalDate.parse(newValue);
+                        workpackageOpt.get().setStartDate(localDate);
                     } catch (DateTimeParseException e) {
                         // Ignore
                     }
@@ -308,29 +288,29 @@ public class AbstractTaskPropertiesConfigurer implements IPropertiesDescriptionR
                 return new Failure("");
             }
         };
-        String id = "abstractTask.startTime";
+        String id = "workpackage.startTime";
         return DateTimeDescription.newDateTimeDescription(id)
-                .isReadOnlyProvider(vm -> vm.get(VariableManager.SELF, AbstractTask.class)
-                        .map(task -> task.getCalculationOption() == TaskTimeBoundariesConstraint.END_DURATION)
+                .isReadOnlyProvider(vm -> vm.get(VariableManager.SELF, Workpackage.class)
+                        .map(workpackage -> workpackage.getCalculationOption() == TaskTimeBoundariesConstraint.END_DURATION)
                         .orElse(true))
                 .idProvider(variableManager -> id)
                 .targetObjectIdProvider(this.propertiesConfigurerService.getSemanticTargetIdProvider())
                 .labelProvider(variableManager -> "Start Time")
                 .stringValueProvider(valueProvider)
                 .newValueHandler(newValueHandler)
-                .diagnosticsProvider(this.propertiesConfigurerService.getDiagnosticsProvider(PepperPackage.Literals.ABSTRACT_TASK__START_TIME))
+                .diagnosticsProvider(this.propertiesConfigurerService.getDiagnosticsProvider(PepperPackage.Literals.WORKPACKAGE__START_DATE))
                 .kindProvider(this.propertiesConfigurerService.getKindProvider())
                 .messageProvider(this.propertiesConfigurerService.getMessageProvider())
-                .type(DateTimeType.DATE_TIME)
+                .type(DateTimeType.DATE)
                 .build();
     }
 
-    private DateTimeDescription getEndTimeWidget() {
+    private DateTimeDescription getEndDateWidget() {
         Function<VariableManager, String> valueProvider = variableManager -> variableManager.get(VariableManager.SELF, Object.class)
-                .map(task -> {
+                .map(workpackage -> {
                     try {
-                        Instant endInstant = ((AbstractTask) task).getEndTime();
-                        return DateTimeFormatter.ISO_INSTANT.format(endInstant);
+                        LocalDate endLocalDate = ((Workpackage) workpackage).getEndDate();
+                        return DateTimeFormatter.ISO_LOCAL_DATE.format(endLocalDate);
                     } catch (DateTimeException | NullPointerException e) {
                         // Ignore
                     }
@@ -338,14 +318,14 @@ public class AbstractTaskPropertiesConfigurer implements IPropertiesDescriptionR
                 })
                 .orElse("");
         BiFunction<VariableManager, String, IStatus> newValueHandler = (variableManager, newValue) -> {
-            var taskOpt = variableManager.get(VariableManager.SELF, Object.class);
-            if (taskOpt.isPresent()) {
+            var workpackageOpt = variableManager.get(VariableManager.SELF, Object.class);
+            if (workpackageOpt.isPresent()) {
                 if (newValue == null || newValue.isBlank()) {
-                    ((AbstractTask) taskOpt.get()).setEndTime(null);
+                    ((Workpackage) workpackageOpt.get()).setEndDate(null);
                 } else {
                     try {
-                        Instant instant = Instant.parse(newValue);
-                        ((AbstractTask) taskOpt.get()).setEndTime(instant);
+                        LocalDate localDate = LocalDate.parse(newValue);
+                        ((Workpackage) workpackageOpt.get()).setEndDate(localDate);
                     } catch (DateTimeParseException e) {
                         // Ignore
                     }
@@ -355,96 +335,35 @@ public class AbstractTaskPropertiesConfigurer implements IPropertiesDescriptionR
                 return new Failure("");
             }
         };
-        String id = "abstractTask.endTime";
+        String id = "workpackage.endTime";
         return DateTimeDescription.newDateTimeDescription(id)
-                .isReadOnlyProvider(vm -> vm.get(VariableManager.SELF, AbstractTask.class)
-                        .map(task -> task.getCalculationOption() == TaskTimeBoundariesConstraint.START_DURATION)
+                .isReadOnlyProvider(vm -> vm.get(VariableManager.SELF, Workpackage.class)
+                        .map(workpackage -> workpackage.getCalculationOption() == TaskTimeBoundariesConstraint.START_DURATION)
                         .orElse(true))
                 .idProvider(variableManager -> id)
                 .targetObjectIdProvider(this.propertiesConfigurerService.getSemanticTargetIdProvider())
                 .labelProvider(variableManager -> "End Time")
                 .stringValueProvider(valueProvider)
                 .newValueHandler(newValueHandler)
-                .diagnosticsProvider(this.propertiesConfigurerService.getDiagnosticsProvider(PepperPackage.Literals.ABSTRACT_TASK__END_TIME))
+                .diagnosticsProvider(this.propertiesConfigurerService.getDiagnosticsProvider(PepperPackage.Literals.WORKPACKAGE__END_DATE))
                 .kindProvider(this.propertiesConfigurerService.getKindProvider())
                 .messageProvider(this.propertiesConfigurerService.getMessageProvider())
-                .type(DateTimeType.DATE_TIME)
+                .type(DateTimeType.DATE)
                 .build();
-    }
-
-    private Function<VariableManager, List<?>> getDependenciesProvider() {
-        return variableManager -> variableManager.get(VariableManager.SELF, AbstractTask.class)
-            .map(this::getProject)
-            .stream()
-            .flatMap(this::getAllContentStream)
-            .filter(Task.class::isInstance)
-            .map(Task.class::cast)
-            .toList();
-    }
-
-    private Project getProject(EObject eObject) {
-        EObject parent = eObject.eContainer();
-        while (parent != null) {
-            if (parent instanceof Project project) {
-                return project;
-            }
-            parent = parent.eContainer();
-        }
-        return null;
-    }
-
-    private IfDescription createComputeDynamicallyWidget() {
-        CheckboxDescription computeDynamically = this.propertiesWidgetCreationService.createCheckbox("abstractTask.computeDynamically", "Compute Start/End Dynamically",
-                task -> ((AbstractTask) task).isComputeStartEndDynamically(),
-                (task, newValue) -> ((AbstractTask) task).setComputeStartEndDynamically(newValue),
-                PepperPackage.Literals.ABSTRACT_TASK__COMPUTE_START_END_DYNAMICALLY,
-                Optional.empty());
-
-        return IfDescription.newIfDescription("if.abstractTask.computeDynamically")
-            .targetObjectIdProvider(variableManager -> variableManager.get(VariableManager.SELF, Object.class).map(this.identityService::getId).orElse(null))
-            .predicate(variableManager-> variableManager.get(VariableManager.SELF, AbstractTask.class)
-                .filter(task -> !task.getSubTasks().isEmpty())
-                .isPresent())
-            .controlDescriptions(List.of(computeDynamically))
-            .build();
-    }
-
-    private Function<VariableManager, List<?>> getTagsProvider() {
-        return variableManager -> variableManager.get(VariableManager.SELF, EObject.class)
-            .map(this::getProject)
-            .stream()
-            .flatMap(project -> project.getOwnedTagFolders().stream())
-            .flatMap(tagFolder -> tagFolder.getOwnedTags().stream())
-            .toList();
     }
 
     private Function<VariableManager, List<?>> getPersonsProvider() {
         return variableManager -> variableManager.get(VariableManager.SELF, EObject.class)
-            .map(EObject::eResource)
-            .stream()
-            .flatMap(this::getAllResourceContentStream)
-            .filter(Person.class::isInstance)
-            .map(Person.class::cast)
-            .toList();
+                .map(EObject::eResource)
+                .stream()
+                .flatMap(this::getAllResourceContentStream)
+                .filter(Person.class::isInstance)
+                .map(Person.class::cast)
+                .toList();
     }
 
     private Stream<EObject> getAllResourceContentStream(Resource resource) {
         Iterable<EObject> content = () -> resource.getAllContents();
         return StreamSupport.stream(content.spliterator(), false);
-    }
-
-    private Stream<EObject> getAllContentStream(EObject eObject) {
-        Iterable<EObject> content = () -> eObject.eAllContents();
-        return StreamSupport.stream(content.spliterator(), false);
-    }
-
-    private Function<VariableManager, List<?>> getTeamsProvider() {
-        return variableManager -> variableManager.get(VariableManager.SELF, EObject.class)
-            .map(EObject::eResource)
-            .stream()
-            .flatMap(this::getAllResourceContentStream)
-            .filter(Team.class::isInstance)
-            .map(Team.class::cast)
-            .toList();
     }
 }

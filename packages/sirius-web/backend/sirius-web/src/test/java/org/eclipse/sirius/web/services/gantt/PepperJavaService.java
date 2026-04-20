@@ -14,6 +14,7 @@
 package org.eclipse.sirius.web.services.gantt;
 
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,8 +62,18 @@ public class PepperJavaService {
                 task.setDescription(description);
             }
             if (endTime != null && startTime != null) {
-                long differenceEnd = task.getEndTime().getEpochSecond() - endTime.getEpochSecond();
-                long differenceStart = task.getStartTime().getEpochSecond() - startTime.getEpochSecond();
+                Instant newStartTime = startTime;
+                Instant newEndTime = endTime;
+                //set the instants to xx:00 for the start time and xx:59 for the end time
+                if ((newEndTime.atZone(ZoneId.systemDefault()).getHour() == 0 || newEndTime.atZone(ZoneId.systemDefault()).getHour() == 12) && !startTime.equals(endTime)) {
+                    newEndTime = newEndTime.minus(1, ChronoUnit.MINUTES);
+                }
+                if (newStartTime.atZone(ZoneId.systemDefault()).getMinute() == 1) {
+                    newStartTime = startTime.minus(1, ChronoUnit.MINUTES);
+                }
+
+                long differenceEnd = task.getEndTime().getEpochSecond() - newEndTime.getEpochSecond();
+                long differenceStart = task.getStartTime().getEpochSecond() - newStartTime.getEpochSecond();
                 boolean endPointed = false;
                 boolean startPointed = false;
                 List<DependencyLink> dependencies = task.getDependencies();
@@ -75,13 +86,19 @@ public class PepperJavaService {
                 }
                 if (dependencies.isEmpty() || differenceEnd != differenceStart) {
                     if (startPointed && !endPointed) {
-                        task.setEndTime(endTime.plus(differenceStart, ChronoUnit.SECONDS));
-                    } else if (endPointed && !startPointed) {
-                        task.setStartTime(startTime.plus(differenceEnd, ChronoUnit.SECONDS));
+                        newEndTime = newEndTime.plus(differenceStart, ChronoUnit.SECONDS);
+                        this.taskSetDuration(task, newStartTime, newEndTime);
+                        task.setEndTime(newEndTime);
+                    } else if (!startPointed && endPointed) {
+                        newStartTime = newStartTime.plus(differenceEnd, ChronoUnit.SECONDS);
+                        this.taskSetDuration(task, newStartTime, newEndTime);
+                        task.setStartTime(newStartTime);
                     } else if (!startPointed && !endPointed) {
-                        task.setStartTime(startTime);
-                        task.setEndTime(endTime);
+                        this.taskSetDuration(task, newStartTime, newEndTime);
+                        task.setStartTime(newStartTime);
+                        task.setEndTime(newEndTime);
                     }
+
                     if (!startPointed || !endPointed) {
                         followTaskMoveDependency(task);
                     }
@@ -93,14 +110,25 @@ public class PepperJavaService {
         }
     }
 
+    private void taskSetDuration(Task task, Instant start, Instant end) {
+        int duration = (int) ChronoUnit.HOURS.between(start, end) + 1; //+1 because between(00:00, 00:59) = 0. We want 1.
+        task.setDuration(duration);
+    }
+
     public void createTask(EObject context) {
         Task task = PepperFactory.eINSTANCE.createTask();
         task.setName(NEW_TASK);
         if (context instanceof AbstractTask abstractTask) {
             // The new task follows the context task and has the same duration as the context task.
             if (abstractTask.getEndTime() != null && abstractTask.getStartTime() != null) {
-                task.setStartTime(abstractTask.getEndTime());
-                task.setEndTime(Instant.ofEpochSecond(2 * abstractTask.getEndTime().getEpochSecond() - abstractTask.getStartTime().getEpochSecond()));
+                if (abstractTask.getEndTime().equals(abstractTask.getStartTime())) {
+                    // If the task is a Milestone
+                    task.setStartTime(abstractTask.getEndTime());
+                    task.setEndTime(Instant.ofEpochSecond(2 * abstractTask.getEndTime().getEpochSecond() - abstractTask.getStartTime().getEpochSecond()));
+                } else {
+                    task.setStartTime(abstractTask.getEndTime().plus(1, ChronoUnit.MINUTES));
+                    task.setEndTime(Instant.ofEpochSecond(2 * abstractTask.getEndTime().getEpochSecond() - abstractTask.getStartTime().getEpochSecond()).plus(1, ChronoUnit.MINUTES));
+                }
             }
 
             EObject parent = context.eContainer();
@@ -250,8 +278,18 @@ public class PepperJavaService {
         int delay = dep.getDuration();
         StartOrEnd sourceStartOrEnd = dep.getSourceKind();
         StartOrEnd targetStartOrEnd = dep.getTargetKind();
+        int zeroIfSourceMilestone = 1;
+        int oneIfSourceMilestone = 0;
+        if (sourceStart.equals(sourceEnd)) {
+            zeroIfSourceMilestone = 0;
+            oneIfSourceMilestone = 1;
+        }
+        int oneIfTargetMilestone = 0;
+        if (oldTaskEnd.equals(oldTaskStart)) {
+            oneIfTargetMilestone = 1;
+        }
         if (sourceStartOrEnd == StartOrEnd.END && targetStartOrEnd == StartOrEnd.START) {
-            Instant newTaskStart = sourceEnd.plus(delay, ChronoUnit.HOURS);
+            Instant newTaskStart = sourceEnd.plus(delay, ChronoUnit.HOURS).plus(zeroIfSourceMilestone, ChronoUnit.MINUTES);
             Instant newTaskEnd = Instant.ofEpochSecond(newTaskStart.getEpochSecond() + oldTaskEnd.getEpochSecond() - oldTaskStart.getEpochSecond());
             task.setEndTime(newTaskEnd);
             task.setStartTime(newTaskStart);
@@ -261,12 +299,12 @@ public class PepperJavaService {
             task.setEndTime(newTaskEnd);
             task.setStartTime(newTaskStart);
         } else if (sourceStartOrEnd == StartOrEnd.END && targetStartOrEnd == StartOrEnd.END) {
-            Instant newTaskEnd = sourceEnd.plus(delay, ChronoUnit.HOURS);
+            Instant newTaskEnd = sourceEnd.plus(delay, ChronoUnit.HOURS).minus(oneIfSourceMilestone, ChronoUnit.MINUTES).plus(oneIfTargetMilestone, ChronoUnit.MINUTES);
             Instant newTaskStart = Instant.ofEpochSecond(newTaskEnd.getEpochSecond() - (oldTaskEnd.getEpochSecond() - oldTaskStart.getEpochSecond()));
             task.setEndTime(newTaskEnd);
             task.setStartTime(newTaskStart);
         } else if (sourceStartOrEnd == StartOrEnd.START && targetStartOrEnd == StartOrEnd.END) {
-            Instant newTaskEnd = sourceStart.plus(delay, ChronoUnit.HOURS);
+            Instant newTaskEnd = sourceStart.plus(delay, ChronoUnit.HOURS).minus(1, ChronoUnit.MINUTES).plus(oneIfTargetMilestone, ChronoUnit.MINUTES);
             Instant newTaskStart = Instant.ofEpochSecond(newTaskEnd.getEpochSecond() - (oldTaskEnd.getEpochSecond() - oldTaskStart.getEpochSecond()));
             task.setEndTime(newTaskEnd);
             task.setStartTime(newTaskStart);

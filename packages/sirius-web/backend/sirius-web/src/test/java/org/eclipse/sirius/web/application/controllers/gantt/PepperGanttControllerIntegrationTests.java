@@ -19,6 +19,7 @@ import com.jayway.jsonpath.JsonPath;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -392,8 +393,8 @@ public class PepperGanttControllerIntegrationTests extends AbstractIntegrationTe
         String taskName1 = "Development";
         String taskName2 = "Idea";
 
-        Instant ideaStartTime = Instant.parse("2023-12-10T08:30:00Z");
-        Instant ideaEndTime = Instant.parse("2023-12-11T17:30:00Z");
+        Instant ideaStartTime = Instant.parse("2023-12-10T00:00:00Z");
+        Instant ideaEndTime = Instant.parse("2023-12-11T23:59:00Z");
         var compareOld = ideaEndTime.compareTo(ideaStartTime);
 
         Consumer<Object> initialGanttContentConsumer = payload -> Optional.of(payload)
@@ -440,7 +441,7 @@ public class PepperGanttControllerIntegrationTests extends AbstractIntegrationTe
                     Instant ideaNewEnd = Instant.parse(task.detail().endTime());
                     var compareNew = ideaNewEnd.compareTo(ideaNewStart);
 
-                    assertThat(task.detail().startTime()).isEqualTo(taskDependency.detail().endTime());
+                    assertThat(Instant.parse(task.detail().startTime())).isEqualTo(Instant.parse(taskDependency.detail().endTime()).plus(1, ChronoUnit.MINUTES));
                     assertThat(compareNew).isEqualTo(compareOld);
                 }, () -> fail(MISSING_GANTT));
         

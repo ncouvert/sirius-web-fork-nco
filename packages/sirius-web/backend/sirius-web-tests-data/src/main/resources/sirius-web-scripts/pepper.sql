@@ -3,8 +3,8 @@
 INSERT INTO project (id,name,created_on,last_modified_on) VALUES
     ('a6cf3fee-18e1-4f56-9c96-4511ea3d95db',
      'Task Sample',
-     '2026-03-19 10:59:20.810292+01',
-     '2026-03-19 10:59:20.810292+01');
+     '2026-03-19 00:00:00.000000+00',
+     '2026-03-19 00:00:00.000000+00');
 
 INSERT INTO nature (project_id,name) VALUES
     ('a6cf3fee-18e1-4f56-9c96-4511ea3d95db',
@@ -12,16 +12,16 @@ INSERT INTO nature (project_id,name) VALUES
 
 INSERT INTO semantic_data (id,created_on,last_modified_on) VALUES
     ('d98557ca-e6fa-4943-ac47-99135429ec34',
-     '2026-03-19 10:59:20.886809+01',
-     '2026-03-19 11:16:32.341391+01');
+     '2026-03-19 00:00:00.000000+00',
+     '2026-03-19 00:00:00.000000+00');
 
 INSERT INTO project_semantic_data (id,project_id,semantic_data_id,name,created_on,last_modified_on) VALUES
     ('43f397b3-2deb-4de9-9de5-90436afcf0e8',
      'a6cf3fee-18e1-4f56-9c96-4511ea3d95db',
      'd98557ca-e6fa-4943-ac47-99135429ec34',
      'main',
-     '2026-03-19 10:59:21.07628+01',
-     '2026-03-19 10:59:21.07628+01');
+     '2026-03-19 00:00:00.000000+00',
+     '2026-03-19 00:00:00.000000+00');
 
 INSERT INTO semantic_data_domain (semantic_data_id,uri) VALUES
     ('d98557ca-e6fa-4943-ac47-99135429ec34',
@@ -68,8 +68,8 @@ INSERT INTO document (id,semantic_data_id,name,content,created_on,last_modified_
                             "data": {
                             "name": "Idea",
                             "description": "Description of the Idea",
-                            "startTime": "2023-12-10T08:30:00Z",
-                            "endTime": "2023-12-11T17:30:00Z",
+                            "startTime": "2023-12-10T00:00:00Z",
+                            "endTime": "2023-12-11T23:59:00Z",
                             "progress": 50
                             }
                         },
@@ -79,16 +79,16 @@ INSERT INTO document (id,semantic_data_id,name,content,created_on,last_modified_
                             "data": {
                             "name": "Development",
                             "description": "",
-                            "startTime": "2023-12-11T23:00:00Z",
-                            "endTime": "2023-12-14T11:00:00Z",
+                            "startTime": "2023-12-11T12:00:00Z",
+                            "endTime": "2023-12-14T11:59:00Z",
                             "subTasks": [
                                 {
                                 "id": "33c7ce2b-e496-47c1-a03b-283264db112d",
                                 "eClass": "peppermm:Task",
                                 "data": {
                                     "name": "Code Development",
-                                    "startTime": "2023-12-13T08:30:00Z",
-                                    "endTime": "2023-12-15T17:30:00Z",
+                                    "startTime": "2023-12-13T00:00:00Z",
+                                    "endTime": "2023-12-15T23:59:00Z",
                                     "progress": 40,
                                     "assignedPersons": [
                                     "8d9ee3a9-4575-416b-b251-f29dcb75e080",
@@ -101,8 +101,8 @@ INSERT INTO document (id,semantic_data_id,name,content,created_on,last_modified_
                                         "data": {
                                         "name": "Front",
                                         "description": "",
-                                        "startTime": "2023-12-14T11:00:00Z",
-                                        "endTime": "2023-12-15T20:00:00Z",
+                                        "startTime": "2023-12-14T12:00:00Z",
+                                        "endTime": "2023-12-15T23:59:00Z",
                                         "progress": 30,
                                         "assignedPersons": [
                                             "8d9ee3a9-4575-416b-b251-f29dcb75e080"
@@ -209,8 +209,8 @@ INSERT INTO document (id,semantic_data_id,name,content,created_on,last_modified_
         }
     ]
     }',
-     '2026-03-19 11:16:32.341391+01',
-     '2026-03-19 11:16:32.341391+01',
+     '2026-03-19 00:00:00.000000+00',
+     '2026-03-19 00:00:00.000000+00',
      false);
 
 
@@ -220,8 +220,8 @@ INSERT INTO representation_metadata (id,target_object_id,description_id,label,ki
      'siriusComponents://representationDescription?kind=ganttDescription&sourceKind=view&sourceId=ae84ea26-3206-30ff-a644-3cec19715105&sourceElementId=1035a9dc-fd08-39e1-b02c-99740626f9e6',
      'New Gantt',
      'siriusComponents://representation?type=Gantt',
-     '2026-03-19 10:59:31.198872+01',
-     '2026-03-19 10:59:31.198872+01',
+     '2026-03-19 00:00:00.000000+00',
+     '2026-03-19 00:00:00.000000+00',
      '',
      'd98557ca-e6fa-4943-ac47-99135429ec34',
      'e16db0ec-22f6-4866-8f36-f82be75cca16');
@@ -242,8 +242,8 @@ INSERT INTO representation_content (id,content,last_migration_performed,migratio
         "detail": {
             "name": "Idea",
             "description": "Description of the Idea",
-            "startTime": "2023-12-10T08:30:00Z",
-            "endTime": "2023-12-11T17:30:00Z",
+            "startTime": "2023-12-10T00:00:00Z",
+            "endTime": "2023-12-11T23:59:00Z",
             "temporalType": "DATE_TIME",
             "progress": 50,
             "computeStartEndDynamically": false,
@@ -261,8 +261,8 @@ INSERT INTO representation_content (id,content,last_migration_performed,migratio
         "detail": {
             "name": "Development",
             "description": "",
-            "startTime": "2023-12-11T23:00:00Z",
-            "endTime": "2023-12-14T11:00:00Z",
+            "startTime": "2023-12-11T12:00:00Z",
+            "endTime": "2023-12-14T11:59:00Z",
             "temporalType": "DATE_TIME",
             "progress": 0,
             "computeStartEndDynamically": false,
@@ -279,8 +279,8 @@ INSERT INTO representation_content (id,content,last_migration_performed,migratio
             "detail": {
                 "name": "Code Development",
                 "description": "",
-                "startTime": "2023-12-13T08:30:00Z",
-                "endTime": "2023-12-15T17:30:00Z",
+                "startTime": "2023-12-13T00:00:00Z",
+                "endTime": "2023-12-15T23:59:00Z",
                 "temporalType": "DATE_TIME",
                 "progress": 40,
                 "computeStartEndDynamically": false,
@@ -304,8 +304,8 @@ INSERT INTO representation_content (id,content,last_migration_performed,migratio
                 "detail": {
                     "name": "Front",
                     "description": "",
-                    "startTime": "2023-12-14T11:00:00Z",
-                    "endTime": "2023-12-15T20:00:00Z",
+                    "startTime": "2023-12-14T12:00:00Z",
+                    "endTime": "2023-12-15T23:59:00Z",
                     "temporalType": "DATE_TIME",
                     "progress": 30,
                     "computeStartEndDynamically": false,
@@ -356,8 +356,8 @@ INSERT INTO representation_content (id,content,last_migration_performed,migratio
     }',
      'none',
      '0',
-     '2026-03-19 10:59:31.296073+01',
-     '2026-03-19 11:16:32.216518+01',
+     '2026-03-19 00:00:00.000000+00',
+     '2026-03-19 00:00:00.000000+00',
      'd98557ca-e6fa-4943-ac47-99135429ec34',
      'e16db0ec-22f6-4866-8f36-f82be75cca16');
 
