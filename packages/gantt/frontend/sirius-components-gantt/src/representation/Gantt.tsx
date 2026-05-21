@@ -37,7 +37,13 @@ import { Theme, useTheme } from '@mui/material/styles';
 import { useEffect, useRef, useState } from 'react';
 import { makeStyles } from 'tss-react/mui';
 import { GQLGanttDateRoundingTimeUnit, SelectableTask } from '../graphql/subscription/GanttSubscription.types';
-import { checkIsHoliday, getDisplayedColumns, getSelectedColumns, roundDate } from '../helper/helper';
+import {
+  checkIsHoliday,
+  getDisplayedColumns,
+  getSelectedColumns,
+  roundDate,
+  setHolidays as setHolidaysHelper,
+} from '../helper/helper';
 import { getTaskContextualPalette, getTaskDependencyContextualPalette } from '../palette/ContextualPalette';
 import { Toolbar } from '../toolbar/Toolbar';
 import { GanttProps, GanttState, TaskListColumnEnum } from './Gantt.types';
@@ -249,6 +255,19 @@ export const Gantt = ({
     value: gqlDateRounding.value,
     timeUnit: getTimeUnit(gqlDateRounding.timeUnit),
   };
+
+  const getHolidays = async (): Promise<Set<string>> => {
+    const response: Response = await fetch('https://calendrier.api.gouv.fr/jours-feries/metropole.json');
+
+    const data: Record<string, string> = await response.json();
+    return new Set(Object.keys(data));
+  };
+
+  useEffect(() => {
+    getHolidays().then((dates) => {
+      setHolidaysHelper(dates);
+    });
+  }, []);
 
   return (
     <div ref={ganttContainerRef} className={ganttClasses.ganttContainer} data-testid={`gantt-representation`}>

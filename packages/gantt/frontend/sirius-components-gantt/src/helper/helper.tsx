@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2023, 2024 Obeo.
+ * Copyright (c) 2023, 2026 Obeo.
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
@@ -303,18 +303,42 @@ export const roundDate = (
   return newdate;
 };
 
+const simpleFormatDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
+let holidays: Set<string> = new Set();
+
+export const setHolidays = (value: Set<string>) => {
+  holidays = value;
+};
+
 export const checkIsHoliday = (date: Date, _, __, dateExtremity: DateExtremity) => {
   let isHoliday = false;
 
-  const day = date.getDay();
-  const isMondayStart = date.getDay() == 1 && date.getHours() == 0 && date.getMinutes() == 0;
-  const isStaturdayStart = date.getDay() == 6 && date.getHours() == 0 && date.getMinutes() == 0;
+  const isNonWorkingDay = (currentDate: Date): boolean => {
+    return holidays.has(simpleFormatDate(currentDate)) || currentDate.getDay() == 6 || currentDate.getDay() == 0;
+  };
+
+  const isWorkingDay = !isNonWorkingDay(date);
+  const previousDate = new Date(date);
+  previousDate.setDate(previousDate.getDate() - 1);
+  const isPreviousWorkingDay = !isNonWorkingDay(previousDate);
+  const isDayStart = date.getHours() == 0 && date.getMinutes() == 0;
   if (dateExtremity == 'startOfTask') {
-    //Monday 00:00 is excluded from WE
-    isHoliday = day == 6 || (day == 0 && !isMondayStart);
+    isHoliday = !isWorkingDay;
   } else if (dateExtremity == 'endOfTask') {
-    //Saturday 00:00 is included from WE
-    isHoliday = (day == 6 && !isStaturdayStart) || day == 0 || isMondayStart;
+    const cond1 = !isWorkingDay && isPreviousWorkingDay && !isDayStart;
+
+    const cond2 = !isWorkingDay && !isPreviousWorkingDay;
+
+    const cond3 = isWorkingDay && !isPreviousWorkingDay && isDayStart;
+
+    isHoliday = cond1 || cond2 || cond3;
   }
 
   return isHoliday;
