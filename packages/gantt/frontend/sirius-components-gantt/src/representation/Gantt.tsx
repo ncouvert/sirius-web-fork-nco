@@ -257,7 +257,15 @@ export const Gantt = ({
   };
 
   const getHolidays = async (): Promise<Set<string>> => {
-    const response: Response = await fetch('https://calendrier.api.gouv.fr/jours-feries/metropole.json');
+    let response: Response;
+
+    if (Intl.DateTimeFormat().resolvedOptions().locale == 'fr-FR') {
+      response = await fetch('https://calendrier.api.gouv.fr/jours-feries/metropole.json');
+      const dataFr: Record<string, string> = await response.json();
+      return new Set(Object.keys(dataFr));
+    } else {
+      response = await fetch('');
+    }
 
     const data: Record<string, string> = await response.json();
     return new Set(Object.keys(data));
