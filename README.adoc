@@ -1,4 +1,4 @@
-= Sirius Web
+= Sirius Web TEST
 
 https://www.eclipse.dev/sirius/sirius-web.html[Eclipse Sirius Web] is a framework to easily create and deploy studios to the web.
 We keep the principles which made the success of https://www.eclipse.dev/sirius[Eclipse Sirius Desktop] and make them available on a modern cloud-based stack.
